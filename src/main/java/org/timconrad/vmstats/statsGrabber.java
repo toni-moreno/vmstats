@@ -83,6 +83,8 @@ class statsGrabber implements Runnable {
             Boolean all_periods = false;
             Boolean all_absolute = false;
             Boolean all_delta = false;
+            Boolean instance_before_metric = false;
+            String rollup_separator =".";
 
             // parse it if we're supposed to use the fully qualified name
             if(appConfig.get("USE_FQDN").equals("true")) {
@@ -96,6 +98,12 @@ class statsGrabber implements Runnable {
             }
             if(appConfig.get("SEND_ALL_DELTA").equals("true")) {
                 all_delta = true;
+            }
+            if(appConfig.get("INSTANCE_BEFORE_METRIC").equals("true")) {
+                instance_before_metric = true;
+            }
+            if(appConfig.get("SEPARATE_ROLLUP").equals("false")) {
+                rollup_separator ="-";
             }
 
             // detect if the object name is an IP address, so that using short name
@@ -155,14 +163,25 @@ class statsGrabber implements Runnable {
                         String statstype = perfKeys.get("" + counterId).get("statstype");
 
                         String graphiteTag;
+                        //logger.debug("METRIC: mobType: " +  mobType );
+                        //logger.debug("METRIC: meNameTag: "+  meNameTag);
+                        //logger.debug("METRIC: key: "+  key);
+                        //logger.debug("METRIC: instance: "+ instance);
+                        //logger.debug("METRIC: rollup: "+ rollup);
                         if (instance.equals("")) {
                             // no instance, no period required
-                            graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + key + "." + rollup;
+                            graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + key + rollup_separator + rollup;
                         } else {
-                            graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + key + "." + instance + "." + rollup;
+                            if(instance_before_metric) {
+                                String[] keyParts = key.split("[.]",2);
+                                graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + keyParts[0] + "." + instance + "." +keyParts[1] + rollup_separator + rollup;
+                            } else {
+                            //graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + key + "." + instance + "." + rollup;
+                                graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + key + "." + instance + rollup_separator + rollup;
+                            }
                         }
                         // tag should be vmstats.VMTAG.hostname.cpu.whatever.whatever at this point
-
+                        //logger.debug("METRIC FINAL: "+ graphiteTag);
                         long stat = 0;
                         if (vals[x] instanceof PerfMetricIntSeries) {
                             PerfMetricIntSeries val = (PerfMetricIntSeries) vals[x];

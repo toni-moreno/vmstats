@@ -201,6 +201,10 @@ public class Main {
         appConfig.put("SEND_ALL_ABSOLUTE", config.getProperty("SEND_ALL_ABSOLUTE"));
         appConfig.put("SEND_ALL_DELTA", config.getProperty("SEND_ALL_DELTA"));
         appConfig.put("DISCONNECT_GRAPHITE_AFTER", config.getProperty("DISCONNECT_GRAPHITE_AFTER"));
+        
+        appConfig.put("INSTANCE_BEFORE_METRIC", config.getProperty("INSTANCE_BEFORE_METRIC"));
+        appConfig.put("SEPARATE_ROLLUP", config.getProperty("SEPARATE_ROLLUP"));
+        
 
 		// Build internal data structures. 
 		
