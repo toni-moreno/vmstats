@@ -132,6 +132,7 @@ class meGrabber implements Runnable{
                     	cluster = clusterMap.get(host.val);
                     }
                     vm_cache.add(new Object[] { vm, cluster });
+                    logger.debug("FOUND VM: "+vm.getName()+ "in cluster: "+ cluster + "and runtime host :"+host.val);
                 }
             }
 		}else{
@@ -177,7 +178,7 @@ class meGrabber implements Runnable{
                     	if (clusterMap.containsKey(id)) {
                         	cluster = clusterMap.get(id);
                         }
-                    	
+                    	logger.debug("FOUND ESX: "+anEsx.getName()+ "in cluster: "+ cluster);
                         esx_cache.add(new Object[]{ anEsx, cluster});
                     }
                 }

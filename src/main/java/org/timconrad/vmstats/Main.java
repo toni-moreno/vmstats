@@ -155,8 +155,16 @@ public class Main {
 		String vcsUser = config.getProperty("VCS_USER");
 		String vcsPass = config.getProperty("VCS_PASS");
 		String vcsTag = config.getProperty("VCS_TAG");
-		List<String> statExcludes = Arrays.asList(config.getProperty("STAT_EXCLUDES").split(","));
-
+        // we will maintaing STATS_EXCLUDES for backward compatibility,  STAT_GROUP_EXCLUDES will check first
+        List<String> statExcludes = null;
+        if(!config.getProperty("STAT_GROUP_EXCLUDES").isEmpty()) {
+            statExcludes = Arrays.asList(config.getProperty("STAT_GROUP_EXCLUDES").split(","));
+        }else {
+            statExcludes = Arrays.asList(config.getProperty("STAT_EXCLUDES").split(","));
+        }
+        // we will get now counter includes
+        List<String> counterIncludes = Arrays.asList(config.getProperty("STAT_COUNTER_INCLUDE").split(","));
+        
 		appConfig.put("vcsTag", vcsTag);
 		// vcs information
 		// this needs to be https://host/sdk
@@ -244,18 +252,34 @@ public class Main {
 				String group = counters[i].getGroupInfo().getKey();
 				
 				if (statExcludes.contains(group)) continue;
+                
+                String metricName = counters[i].getNameInfo().getKey();
 				
-				// create a temp hash to push onto the big hash
-				Hashtable<String,String> temp_hash = new Hashtable<String, String>();
-				String path = group + "." + counters[i].getNameInfo().getKey();
-                // this is a key like cpu.run.0.summation
-				temp_hash.put("key", path);
-                // one of average, latest, maximum, minimum, none,  summation
-				temp_hash.put("rollup", counters[i].getRollupType().toString());
-                // one of absolute, delta, rate
-                temp_hash.put("statstype", counters[i].getStatsType().toString());
-				// it's important to understand that the counters aren't sequential, so they have their own id.
-				perfKeys.put("" + counters[i].getKey(), temp_hash);
+                Boolean counterMatch=false;
+                
+                for(String all_regex : counterIncludes){
+                    String group_regex=all_regex.split(":")[0];
+                    String metric_regex=all_regex.split(":")[1];
+                    if(group.matches(group_regex) && metricName.matches(metric_regex)) {
+                        counterMatch = true;
+                        logger.debug("metric counter match : "+metricName+ " with regex (" + group_regex + ":" + metric_regex +" )");
+                        break;
+                    } 
+                }
+                if(counterMatch) {
+                    // create a temp hash to push onto the big hash
+                    Hashtable<String,String> temp_hash = new Hashtable<String, String>();
+                    String path = group + "." + metricName;
+                    // this is a key like cpu.run.0.summation
+                    temp_hash.put("group",group);
+                    temp_hash.put("metric",metricName);
+                    // one of average, latest, maximum, minimum, none,  summation
+                    temp_hash.put("rollup", counters[i].getRollupType().toString());
+                    // one of absolute, delta, rate
+                    temp_hash.put("statstype", counters[i].getStatsType().toString());
+                    // it's important to understand that the counters aren't sequential, so they have their own id.
+                    perfKeys.put("" + counters[i].getKey(), temp_hash);
+                }
 			}
 		}else{
 			logger.info("Issues with the service instance that wasn't properly handled");
@@ -268,10 +292,10 @@ public class Main {
 			System.out.println("Read the following link for more information:");
 			System.out.println("http://vijava.sourceforge.net/vSphereAPIDoc/ver5/ReferenceGuide/vim.PerformanceManager.html");
 			Enumeration<String> keys = perfKeys.keys();
-            System.out.println("ID|Tag|Rollup");
+            System.out.println("ID|Group|metric|Rollup");
 			while(keys.hasMoreElements()){
 				String key = (String) keys.nextElement();
-				System.out.println(key + "|" + perfKeys.get(key).get("key") + "|" + perfKeys.get(key).get("rollup"));
+				System.out.println(key + "|" + perfKeys.get(key).get("group")+ "|" + perfKeys.get(key).get("metric") + "|" + perfKeys.get(key).get("rollup"));
 			}
 			System.exit(0);
 		}

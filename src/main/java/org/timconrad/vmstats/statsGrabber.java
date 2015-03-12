@@ -151,8 +151,8 @@ class statsGrabber implements Runnable {
                         Hashtable<String, String> perfKey = perfKeys.get("" + counterId);
                         if (perfKey==null) 
                         	continue;
-                        String key = perfKey.get("key");
-                        
+                        String group = perfKey.get("group");
+                        String metric = perfKey.get("metric");
                         String instance = vals[x].getId().getInstance();
                         // disks will be naa.12341234, change them to naa_12341234 instead
                         instance = instance.replace(".", "_");
@@ -163,21 +163,15 @@ class statsGrabber implements Runnable {
                         String statstype = perfKeys.get("" + counterId).get("statstype");
 
                         String graphiteTag;
-                        //logger.debug("METRIC: mobType: " +  mobType );
-                        //logger.debug("METRIC: meNameTag: "+  meNameTag);
-                        //logger.debug("METRIC: key: "+  key);
-                        //logger.debug("METRIC: instance: "+ instance);
-                        //logger.debug("METRIC: rollup: "+ rollup);
+
                         if (instance.equals("")) {
                             // no instance, no period required
-                            graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + key + rollup_separator + rollup;
+                            graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + group + "." + metric + rollup_separator + rollup;
                         } else {
                             if(instance_before_metric) {
-                                String[] keyParts = key.split("[.]",2);
-                                graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + keyParts[0] + "." + instance + "." +keyParts[1] + rollup_separator + rollup;
+                                graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + group + "." + instance + "." + metric + rollup_separator + rollup;
                             } else {
-                            //graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + key + "." + instance + "." + rollup;
-                                graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + key + "." + instance + rollup_separator + rollup;
+                                graphiteTag = TAG_NS + "." + mobType + "." + meNameTag + "." + group + "." + metric + "." + instance + rollup_separator + rollup;
                             }
                         }
                         // tag should be vmstats.VMTAG.hostname.cpu.whatever.whatever at this point
